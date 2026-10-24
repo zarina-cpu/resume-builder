@@ -45,7 +45,12 @@ function prepareCloneForExport(clonedDoc, clonedElement) {
     .opacity-75 { opacity:0.75; } .opacity-80 { opacity:0.8; } .opacity-90 { opacity:0.9; }
     .sm\\:flex-row { flex-direction:row; } .md\\:flex-row { flex-direction:row; } .md\\:w-56 { width:14rem; } .md\\:p-10 { padding:2.5rem; } .md\\:p-14 { padding:3.5rem; }
     .chip-soft { background:var(--resume-accent-soft); border-color:var(--resume-border); color:var(--resume-accent); }
-    .resume-export-root { box-shadow:none !important; margin:0 !important; background:#fff; }
+    .text-white { color:#ffffff !important; }
+    .resume-sidebar, .resume-sidebar * { color:#ffffff !important; }
+    .resume-sidebar span { color:#ffffff !important; }
+    .block { display:block; }
+    .resume-export-root { box-shadow:none !important; margin:0 !important; background:#fff; width:794px !important; max-width:794px !important; }
+    .resume-sheet { width:794px !important; max-width:794px !important; min-height:auto !important; }
   `
   clonedDoc.head.appendChild(style)
 
@@ -97,13 +102,32 @@ function resumeAppStylesheets(paused) {
 }
 
 async function captureElement(element) {
+  const exportWidth = Number(element.dataset.exportWidth) || 794
+
   const sandbox = document.createElement('div')
   sandbox.setAttribute('aria-hidden', 'true')
-  sandbox.style.cssText =
-    'position:fixed;left:-10000px;top:0;width:max-content;z-index:-1;pointer-events:none;background:#fff;'
+  sandbox.style.cssText = `position:fixed;left:0;top:0;width:${exportWidth}px;opacity:0;pointer-events:none;z-index:-1;background:#fff;`
   const clone = element.cloneNode(true)
+  clone.style.width = `${exportWidth}px`
+  clone.style.maxWidth = `${exportWidth}px`
+  clone.style.transform = 'none'
+
+  const sheet = clone.querySelector('.resume-sheet')
+  if (sheet) {
+    sheet.style.width = `${exportWidth}px`
+    sheet.style.maxWidth = `${exportWidth}px`
+  }
+
   sandbox.appendChild(clone)
   document.body.appendChild(sandbox)
+
+  await new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(resolve))
+  })
+
+  const exportHeight = Math.ceil(
+    Math.max(clone.scrollHeight, clone.offsetHeight, sheet?.scrollHeight || 0),
+  )
 
   const pausedStyles = pauseAppStylesheets()
 
@@ -115,6 +139,10 @@ async function captureElement(element) {
       backgroundColor: '#ffffff',
       scrollX: 0,
       scrollY: 0,
+      width: exportWidth,
+      height: exportHeight,
+      windowWidth: exportWidth,
+      windowHeight: exportHeight,
       onclone: (clonedDoc, clonedElement) => {
         prepareCloneForExport(clonedDoc, clonedElement)
       },

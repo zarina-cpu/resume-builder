@@ -13,7 +13,7 @@ export function PreviewPane({ resume, settings, exportRef }) {
         ref={scrollRef}
         className="overflow-x-auto pb-4 lg:pb-0 -mx-4 px-4 lg:mx-0 lg:px-0"
       >
-        <div className="min-w-[min(100%,794px)] lg:scale-[0.85] lg:origin-top">
+        <div className="min-w-[min(100%,794px)] lg:origin-top lg:[zoom:0.85]">
           <ResumeRenderer
             exportRef={exportRef}
             data={resume}

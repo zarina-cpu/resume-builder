@@ -21,8 +21,8 @@ export function SidebarTemplate({ data, mode }) {
       style={{ width: isPortfolio ? '100%' : '794px', maxWidth: '100%' }}
     >
       <aside
-        className="md:w-56 shrink-0 p-6 text-white"
-        style={{ backgroundColor: 'var(--resume-accent)' }}
+        className="resume-sidebar md:w-56 shrink-0 p-6"
+        style={{ backgroundColor: 'var(--resume-accent)', color: '#ffffff' }}
       >
         {profile.photo && (
           <img

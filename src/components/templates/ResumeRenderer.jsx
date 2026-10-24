@@ -17,6 +17,7 @@ export function ResumeRenderer({ data, templateId, paletteId, mode = 'resume', e
       ref={exportRef}
       className="resume-export-root shadow-xl rounded-sm overflow-hidden mx-auto"
       data-pdf-export="true"
+      data-export-width="794"
     >
       <Template data={enriched} mode={mode} />
     </div>
