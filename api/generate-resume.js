@@ -1,6 +1,10 @@
 import { loadEnv } from '../server/loadEnv.js'
 import { generateResumeTexts } from '../server/geminiService.js'
 
+export const config = {
+  maxDuration: 10,
+}
+
 export default async function handler(req, res) {
   await loadEnv()
 

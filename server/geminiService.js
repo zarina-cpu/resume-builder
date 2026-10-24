@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
-const MODEL_CANDIDATES = [
+const LOCAL_MODEL_CANDIDATES = [
   process.env.GEMINI_MODEL,
   'gemini-3.8-flash',
   'gemini-3.7-flash',
@@ -11,7 +11,30 @@ const MODEL_CANDIDATES = [
   'gemini-flash-latest',
 ].filter(Boolean)
 
-const REQUEST_TIMEOUT_MS = 90_000
+/** Vercel Hobby ~10s limit — короткий бюджет и быстрые модели */
+const VERCEL_FAST_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-3.5-flash',
+]
+
+function getGenerationPlan() {
+  const preferred = process.env.GEMINI_MODEL?.trim()
+
+  if (process.env.VERCEL) {
+    const models = [...new Set([preferred, ...VERCEL_FAST_MODELS].filter(Boolean))].slice(
+      0,
+      2,
+    )
+    return { models, perModelMs: 4_500, totalBudgetMs: 9_000 }
+  }
+
+  return {
+    models: [...new Set(LOCAL_MODEL_CANDIDATES)],
+    perModelMs: 90_000,
+    totalBudgetMs: null,
+  }
+}
 
 function buildPrompt(data) {
   const payload = {
@@ -94,14 +117,20 @@ export async function generateResumeTexts(data) {
 
   const genAI = new GoogleGenerativeAI(apiKey)
   const prompt = buildPrompt(data)
-  const models = [...new Set(MODEL_CANDIDATES)]
+  const { models, perModelMs, totalBudgetMs } = getGenerationPlan()
+  const startedAt = Date.now()
   let lastError
 
   const errors = []
 
   for (const modelName of models) {
+    if (totalBudgetMs && Date.now() - startedAt >= totalBudgetMs - 400) {
+      errors.push('budget: превышен лимит времени Vercel')
+      break
+    }
+
     try {
-      return await withTimeout(generateWithModel(genAI, modelName, prompt), REQUEST_TIMEOUT_MS)
+      return await withTimeout(generateWithModel(genAI, modelName, prompt), perModelMs)
     } catch (err) {
       lastError = err
       errors.push(`${modelName}: ${err.message}`)

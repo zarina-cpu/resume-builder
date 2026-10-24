@@ -38,6 +38,11 @@ export async function generateResumeTexts(data) {
   }
 
   if (!res.ok) {
+    if (res.status === 504) {
+      throw new Error(
+        'Сервер не успел ответить (504). На Vercel лимит ~10 с — повторите «Сгенерировать» или укажите GEMINI_MODEL=gemini-2.5-flash.',
+      )
+    }
     throw new Error(body.error || `Ошибка сервера (${res.status})`)
   }
 
