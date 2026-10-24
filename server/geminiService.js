@@ -3,11 +3,15 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 const MODEL_CANDIDATES = [
   process.env.GEMINI_MODEL,
   'gemini-3.8-flash',
+  'gemini-3.7-flash',
   'gemini-3.6-flash',
-  'gemini-3-flash',
+  'gemini-3.5-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-2.5-flash',
+  'gemini-flash-latest',
 ].filter(Boolean)
 
-const REQUEST_TIMEOUT_MS = 60_000
+const REQUEST_TIMEOUT_MS = 90_000
 
 function buildPrompt(data) {
   const payload = {
@@ -92,13 +96,20 @@ export async function generateResumeTexts(data) {
   const models = [...new Set(MODEL_CANDIDATES)]
   let lastError
 
+  const errors = []
+
   for (const modelName of models) {
     try {
       return await withTimeout(generateWithModel(genAI, modelName, prompt), REQUEST_TIMEOUT_MS)
     } catch (err) {
       lastError = err
+      errors.push(`${modelName}: ${err.message}`)
       console.warn(`Gemini model ${modelName} failed:`, err.message)
     }
+  }
+
+  if (errors.length) {
+    console.warn('All Gemini models failed:', errors.join(' | '))
   }
 
   throw lastError || new Error('Не удалось вызвать Gemini')
