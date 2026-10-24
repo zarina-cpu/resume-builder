@@ -4,33 +4,12 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { generateResumeTexts } from './geminiService.js'
-import { initDb, isTursoConfigured, loadClientData, saveClientData } from './db.js'
+import { isTursoConfigured, loadClientData, saveClientData } from './db.js'
+import { parseClientId } from './clientId.js'
+import { ensureDbReady } from './ensureDbReady.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const distPath = path.join(__dirname, '../dist')
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-
-let dbInitPromise = null
-
-export function ensureDbReady() {
-  if (!isTursoConfigured()) return Promise.resolve(false)
-  if (!dbInitPromise) {
-    dbInitPromise = initDb().catch((err) => {
-      dbInitPromise = null
-      console.error('Turso init failed:', err.message)
-      throw err
-    })
-  }
-  return dbInitPromise
-}
-
-function parseClientId(req) {
-  const id = req.query.clientId || req.headers['x-client-id']
-  if (!id || typeof id !== 'string' || !UUID_RE.test(id)) return null
-  return id
-}
 
 const app = express()
 

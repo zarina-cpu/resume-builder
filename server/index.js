@@ -1,5 +1,7 @@
-import 'dotenv/config'
+import { loadEnv } from './loadEnv.js'
 import app from './app.js'
+
+await loadEnv()
 
 const PORT = Number(process.env.PORT) || 3001
 

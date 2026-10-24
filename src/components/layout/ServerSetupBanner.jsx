@@ -40,9 +40,17 @@ export function ServerSetupBanner() {
       {onVercel ? (
         <p className="mt-2">
           Vercel: Project → <strong>Settings</strong> → <strong>Environment Variables</strong> →
-          добавьте переменные для <strong>Production</strong>, затем{' '}
-          <strong>Deployments → Redeploy</strong>. Файл <code className="text-xs">.env</code> с
-          компьютера на Vercel не попадает.
+          имя <strong>GEMINI_API_KEY</strong>, значение без кавычек, галочка{' '}
+          <strong>Production</strong>, затем <strong>Deployments → Redeploy</strong>. Проверка:{' '}
+          <a
+            href="/api/health"
+            target="_blank"
+            rel="noreferrer"
+            className="underline font-medium"
+          >
+            /api/health
+          </a>{' '}
+          (должно быть <code className="text-xs">geminiConfigured: true</code>).
         </p>
       ) : (
         <p className="mt-2">
