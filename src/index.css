@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+}
+
+html {
+  font-family: var(--font-sans);
+}
+
+.resume-palette-slate {
+  --resume-accent: #334155;
+  --resume-accent-light: #64748b;
+  --resume-muted: #94a3b8;
+  --resume-border: #e2e8f0;
+  --resume-bg: #ffffff;
+  --resume-text: #0f172a;
+  --resume-accent-soft: #f1f5f9;
+}
+
+.resume-palette-ocean {
+  --resume-accent: #0369a1;
+  --resume-accent-light: #0284c7;
+  --resume-muted: #64748b;
+  --resume-border: #bae6fd;
+  --resume-bg: #ffffff;
+  --resume-text: #0c4a6e;
+  --resume-accent-soft: #e0f2fe;
+}
+
+.resume-palette-forest {
+  --resume-accent: #166534;
+  --resume-accent-light: #22c55e;
+  --resume-muted: #6b7280;
+  --resume-border: #bbf7d0;
+  --resume-bg: #ffffff;
+  --resume-text: #14532d;
+  --resume-accent-soft: #ecfdf5;
+}
+
+.resume-palette-burgundy {
+  --resume-accent: #881337;
+  --resume-accent-light: #be123c;
+  --resume-muted: #78716c;
+  --resume-border: #fecdd3;
+  --resume-bg: #ffffff;
+  --resume-text: #4c0519;
+  --resume-accent-soft: #fff1f2;
+}
+
+.resume-sheet {
+  background: var(--resume-bg);
+  color: var(--resume-text);
+}
