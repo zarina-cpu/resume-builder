@@ -48,15 +48,11 @@ export function EditorPage() {
   const handlePdf = async () => {
     const errors = validateForPdf(resume)
     if (errors.length) {
-      setStatus(errors.join('. '), 'error')
-      return
-    }
-    if (!resume.ai.summary) {
-      setStatus('Сначала сгенерируйте описание через Gemini (или заполните вручную позже)', 'error')
+      setStatus(`PDF: ${errors.join('. ')}`, 'error')
       return
     }
     setExporting(true)
-    setStatus('Формируем PDF…', 'info')
+    setStatus('Формируем PDF… Подождите несколько секунд.', 'info')
     try {
       const name = (resume.profile.fullName || 'resume').replace(/\s+/g, '-')
       await exportPdf(exportRef.current, `${name}-resume.pdf`)
@@ -118,6 +114,20 @@ export function EditorPage() {
       <div
         className="fixed bottom-0 left-0 right-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 flex flex-wrap gap-3 justify-center shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-[100]"
       >
+        {statusMessage && (
+          <p
+            role="alert"
+            className={`w-full max-w-2xl text-center text-sm rounded-lg px-3 py-2 order-first ${
+              statusType === 'error'
+                ? 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200'
+                : statusType === 'success'
+                  ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200'
+                  : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200'
+            }`}
+          >
+            {statusMessage}
+          </p>
+        )}
         <button
           type="button"
           onClick={handleGenerate}

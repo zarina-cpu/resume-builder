@@ -1,6 +1,8 @@
 import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 
+const CAPTURE_TIMEOUT_MS = 45_000
+
 /** Tailwind 4 injects oklch() — strip app styles in clone so only resume CSS applies */
 function prepareCloneForExport(clonedDoc, clonedElement) {
   clonedDoc.querySelectorAll('link[rel="stylesheet"], style').forEach((node) => node.remove())
@@ -8,7 +10,7 @@ function prepareCloneForExport(clonedDoc, clonedElement) {
   const style = clonedDoc.createElement('style')
   style.textContent = `
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: Inter, system-ui, sans-serif; }
+    body { margin: 0; font-family: Inter, system-ui, sans-serif; background:#fff; }
     .resume-palette-slate { --resume-accent:#334155;--resume-accent-light:#64748b;--resume-muted:#94a3b8;--resume-border:#e2e8f0;--resume-bg:#fff;--resume-text:#0f172a;--resume-accent-soft:#f1f5f9; }
     .resume-palette-ocean { --resume-accent:#0369a1;--resume-accent-light:#0284c7;--resume-muted:#64748b;--resume-border:#bae6fd;--resume-bg:#fff;--resume-text:#0c4a6e;--resume-accent-soft:#e0f2fe; }
     .resume-palette-forest { --resume-accent:#166534;--resume-accent-light:#22c55e;--resume-muted:#6b7280;--resume-border:#bbf7d0;--resume-bg:#fff;--resume-text:#14532d;--resume-accent-soft:#ecfdf5; }
@@ -41,14 +43,85 @@ function prepareCloneForExport(clonedDoc, clonedElement) {
     .max-w-2xl { max-width:42rem; } .max-w-xl { max-width:36rem; } .list-disc { list-style-type:disc; }
     .list-inside { list-style-position:inside; } .inline-block { display:inline-block; } .break-all { word-break:break-all; }
     .opacity-75 { opacity:0.75; } .opacity-80 { opacity:0.8; } .opacity-90 { opacity:0.9; }
-    .md\\:flex-row { flex-direction:row; } .md\\:w-56 { width:14rem; } .md\\:p-10 { padding:2.5rem; } .md\\:p-14 { padding:3.5rem; }
+    .sm\\:flex-row { flex-direction:row; } .md\\:flex-row { flex-direction:row; } .md\\:w-56 { width:14rem; } .md\\:p-10 { padding:2.5rem; } .md\\:p-14 { padding:3.5rem; }
     .chip-soft { background:var(--resume-accent-soft); border-color:var(--resume-border); color:var(--resume-accent); }
+    .resume-export-root { box-shadow:none !important; margin:0 !important; background:#fff; }
   `
   clonedDoc.head.appendChild(style)
 
   if (clonedElement) {
     clonedElement.style.boxShadow = 'none'
     clonedElement.style.margin = '0'
+    clonedElement.style.background = '#ffffff'
+  }
+}
+
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(
+        () => reject(new Error('Создание PDF заняло слишком много времени. Попробуйте ещё раз.')),
+        ms,
+      )
+    }),
+  ])
+}
+
+function pauseAppStylesheets() {
+  const paused = []
+  document.querySelectorAll('link[rel="stylesheet"], style[data-vite-dev-id]').forEach((node) => {
+    if (node.tagName === 'LINK') {
+      if (!node.disabled) {
+        node.disabled = true
+        paused.push(node)
+      }
+    } else {
+      node.setAttribute('data-pdf-paused', 'true')
+      node.media = 'not all'
+      paused.push(node)
+    }
+  })
+  return paused
+}
+
+function resumeAppStylesheets(paused) {
+  paused.forEach((node) => {
+    if (node.tagName === 'LINK') {
+      node.disabled = false
+    } else {
+      node.media = ''
+      node.removeAttribute('data-pdf-paused')
+    }
+  })
+}
+
+async function captureElement(element) {
+  const sandbox = document.createElement('div')
+  sandbox.setAttribute('aria-hidden', 'true')
+  sandbox.style.cssText =
+    'position:fixed;left:-10000px;top:0;width:max-content;z-index:-1;pointer-events:none;background:#fff;'
+  const clone = element.cloneNode(true)
+  sandbox.appendChild(clone)
+  document.body.appendChild(sandbox)
+
+  const pausedStyles = pauseAppStylesheets()
+
+  try {
+    return await html2canvas(clone, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      scrollX: 0,
+      scrollY: 0,
+      onclone: (clonedDoc, clonedElement) => {
+        prepareCloneForExport(clonedDoc, clonedElement)
+      },
+    })
+  } finally {
+    resumeAppStylesheets(pausedStyles)
+    sandbox.remove()
   }
 }
 
@@ -57,15 +130,7 @@ export async function exportPdf(element, fileName = 'resume.pdf') {
 
   await document.fonts.ready
 
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    logging: false,
-    backgroundColor: '#ffffff',
-    onclone: (clonedDoc, clonedElement) => {
-      prepareCloneForExport(clonedDoc, clonedElement)
-    },
-  })
+  const canvas = await withTimeout(captureElement(element), CAPTURE_TIMEOUT_MS)
 
   const imgData = canvas.toDataURL('image/png')
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
