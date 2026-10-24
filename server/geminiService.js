@@ -86,9 +86,10 @@ async function generateWithModel(genAI, modelName, prompt) {
 export async function generateResumeTexts(data) {
   const apiKey = process.env.GEMINI_API_KEY?.trim()
   if (!apiKey) {
-    throw new Error(
-      'На сервере не задан GEMINI_API_KEY. Добавьте ключ в файл .env в корне проекта.',
-    )
+    const hint = process.env.VERCEL
+      ? 'На Vercel: Project → Settings → Environment Variables → GEMINI_API_KEY, затем Redeploy. Файл .env на хостинг не загружается.'
+      : 'Локально: GEMINI_API_KEY в .env в корне проекта и перезапуск npm run dev.'
+    throw new Error(`На сервере не задан GEMINI_API_KEY. ${hint}`)
   }
 
   const genAI = new GoogleGenerativeAI(apiKey)
