@@ -1,4 +1,5 @@
 import { createInitialResume, createInitialSettings } from '../models/resume'
+import { getServerHealth } from '../services/serverHealth'
 
 const CLIENT_ID_KEY = 'resume-builder:client-id'
 const RESUME_CACHE_KEY = 'resume-builder:resume-cache'
@@ -82,6 +83,12 @@ function writeLocalCache(resume, settings) {
 
 export async function loadRemoteData() {
   const clientId = getClientId()
+  const health = await getServerHealth()
+
+  if (!health.tursoConfigured) {
+    const local = loadLocalCache()
+    return { ...local, source: 'local', clientId }
+  }
 
   try {
     const res = await fetch(`/api/data?clientId=${encodeURIComponent(clientId)}`)
@@ -112,6 +119,9 @@ export async function loadRemoteData() {
 }
 
 async function putRemoteData(resume, settings) {
+  const health = await getServerHealth()
+  if (!health.tursoConfigured) return
+
   const clientId = getClientId()
   const res = await fetch(`/api/data?clientId=${encodeURIComponent(clientId)}`, {
     method: 'PUT',

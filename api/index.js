@@ -1,4 +1,7 @@
-import 'dotenv/config'
-import app from '../server/app.js'
+if (!process.env.VERCEL) {
+  await import('dotenv/config')
+}
+
+const { default: app } = await import('../server/app.js')
 
 export default app

@@ -31,8 +31,18 @@ npm run preview
 ## Деплой на Vercel
 
 1. Импортируйте репозиторий [zarina-cpu/resume-builder](https://github.com/zarina-cpu/resume-builder) в [Vercel](https://vercel.com/new).
-2. В **Settings → Environment Variables** добавьте те же переменные, что в `.env.example` (`GEMINI_API_KEY`, `GEMINI_MODEL`, `TURSO_*`).
-3. После деплоя открывайте **Production URL** из панели Vercel (например `https://resume-builder-….vercel.app`), а не произвольную ссылку — иначе возможен 404 NOT_FOUND.
+2. **Settings → Environment Variables** — добавьте (галочка **Production** обязательна):
+
+   | Name | Пример |
+   |------|--------|
+   | `GEMINI_API_KEY` | ключ из [AI Studio](https://aistudio.google.com/apikey) |
+   | `GEMINI_MODEL` | `gemini-3.8-flash` |
+   | `TURSO_DATABASE_URL` | `libsql://…` |
+   | `TURSO_AUTH_TOKEN` | токен Turso |
+
+3. **Deployments** → последний деплой → **⋯ → Redeploy** (без redeploy ключи не подхватятся).
+4. Проверка: `https://ваш-домен.vercel.app/api/health` → `"geminiConfigured": true`.
+5. Открывайте **Production URL** из панели Vercel, не старые preview-ссылки.
 
 В репозитории есть `vercel.json`: статика из `dist`, маршруты SPA и API через `api/index.js`.
 
